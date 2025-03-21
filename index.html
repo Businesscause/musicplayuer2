@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Audio Player</title>
+</head>
+<body>
+    <h1>Stream Audio</h1>
+
+    <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    
+    <p>🔊 Volume: <span id="volumeDisplay">100%</span></p>
+
+    <button onclick="playAudio()">Play</button>
+    <button onclick="lowerVolume()">Lower Volume</button>
+    <button onclick="raiseVolume()">Raise Volume</button>
+
+    <script>
+        let audio = document.getElementById("audio");
+        let volumeDisplay = document.getElementById("volumeDisplay");
+
+        // Set initial volume display
+        volumeDisplay.innerText = Math.round(audio.volume * 100) + "%";
+
+        function playAudio() {
+            audio.play();
+        }
+
+        function lowerVolume() {
+            if (audio.volume > 0.01) {
+                audio.volume = Math.round((audio.volume - 0.01) * 100) / 100;
+            } else {
+                audio.volume = 0;
+            }
+            updateVolumeDisplay();
+        }
+
+        function raiseVolume() {
+            if (audio.volume < 0.99) {
+                audio.volume = Math.round((audio.volume + 0.01) * 100) / 100;
+            } else {
+                audio.volume = 1;
+            }
+            updateVolumeDisplay();
+        }
+
+        function updateVolumeDisplay() {
+            volumeDisplay.innerText = Math.round(audio.volume * 100) + "%";
+        }
+
+        // ✅ MEDIA SESSION API - Enables playback control from lock screen
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: "My Song",
+                artist: "Unknown Artist",
+                artwork: [{ src: "https://via.placeholder.com/512", sizes: "512x512", type: "image/png" }]
+            });
+
+            // Handle play/pause from lock screen
+            navigator.mediaSession.setActionHandler('play', () => { audio.play(); });
+            navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); });
+
+            // Optional: Implement next/previous (if you have a playlist)
+            // navigator.mediaSession.setActionHandler('previoustrack', () => { console.log("Previous Track"); });
+            // navigator.mediaSession.setActionHandler('nexttrack', () => { console.log("Next Track"); });
+        }
+    </script>
+</body>
+</html>
