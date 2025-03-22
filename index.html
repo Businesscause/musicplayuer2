@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Audio Player</title>
     <style>
         body {
@@ -11,6 +11,7 @@
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             padding: 20px;
+            touch-action: manipulation;
         }
         .player-container {
             background: rgba(255, 255, 255, 0.15);
@@ -31,10 +32,16 @@
             cursor: pointer;
             font-size: 16px;
             transition: transform 0.3s, background 0.3s;
+            touch-action: manipulation;
         }
         .small-btn { background: #ffcc00; color: black; }
         .large-btn { background: #ff4444; color: white; }
-        .play-btn { background: #00cc66; color: white; font-size: 20px; padding: 16px 24px; }
+        .play-btn {
+            background: #00cc66;
+            color: white;
+            font-size: 24px;
+            padding: 20px 30px;
+        }
         button:hover {
             transform: scale(1.1);
             background: rgba(255, 255, 255, 0.3);
@@ -59,6 +66,13 @@
             border-radius: 5px;
             transition: width 0.2s;
         }
+        .volume-bar {
+            height: 100%;
+            width: 100%;
+            background: #00cc66;
+            border-radius: 5px;
+            transition: width 0.2s;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
@@ -66,25 +80,33 @@
     <div class="player-container">
         <h2>🎵 Modern Audio Player</h2>
         <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" controls></audio>
+        
         <div class="progress-container" onclick="setProgress(event)">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
+        
         <div class="controls">
             <button class="play-btn" onclick="togglePlayPause()">▶️ Play</button>
         </div>
+        
         <div class="controls">
             <button class="small-btn" onclick="changeVolume(-0.01)">🔉 - 0.01</button>
             <button class="small-btn" onclick="changeVolume(0.01)">🔊 + 0.01</button>
             <button class="large-btn" onclick="changeVolume(-0.1)">🔉 - 0.1</button>
             <button class="large-btn" onclick="changeVolume(0.1)">🔊 + 0.1</button>
         </div>
+        
         <p>Current Volume: <span id="volume-display">100</span>%</p>
+        <div class="progress-container" onclick="setVolume(event)">
+            <div class="volume-bar" id="volume-bar"></div>
+        </div>
     </div>
 
     <script>
         const audio = document.getElementById("audio");
         const volumeDisplay = document.getElementById("volume-display");
         const progressBar = document.getElementById("progress-bar");
+        const volumeBar = document.getElementById("volume-bar");
         const progressContainer = document.querySelector(".progress-container");
         const playBtn = document.querySelector(".play-btn");
 
@@ -103,11 +125,17 @@
             newVolume = Math.max(0, Math.min(1, newVolume)); // Keep volume between 0 and 1
             audio.volume = newVolume;
             volumeDisplay.textContent = Math.round(newVolume * 100); // Display volume as percentage
+            updateVolumeBar();
         }
 
         function updateProgressBar() {
             const progressPercent = (audio.currentTime / audio.duration) * 100;
             progressBar.style.width = `${progressPercent}%`;
+        }
+
+        function updateVolumeBar() {
+            const volumePercent = audio.volume * 100;
+            volumeBar.style.width = `${volumePercent}%`;
         }
 
         function setProgress(event) {
@@ -117,7 +145,23 @@
             audio.currentTime = (clickX / width) * duration;
         }
 
+        function setVolume(event) {
+            const width = progressContainer.clientWidth;
+            const clickX = event.offsetX;
+            let newVolume = clickX / width;
+            newVolume = Math.max(0, Math.min(1, newVolume));
+            audio.volume = newVolume;
+            volumeDisplay.textContent = Math.round(newVolume * 100);
+            updateVolumeBar();
+        }
+
+        // Prevent double-tap zoom on iPhones
+        document.addEventListener('dblclick', function (event) {
+            event.preventDefault();
+        }, { passive: false });
+
         audio.addEventListener("timeupdate", updateProgressBar);
+        audio.addEventListener("volumechange", updateVolumeBar);
     </script>
 </body>
 </html>
