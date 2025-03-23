@@ -66,12 +66,26 @@
             border-radius: 5px;
             transition: width 0.2s;
         }
+        .volume-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            height: 8px;
+            margin: 10px 0;
+            position: relative;
+            cursor: pointer;
+        }
         .volume-bar {
             height: 100%;
             width: 100%;
             background: #00cc66;
             border-radius: 5px;
             transition: width 0.2s;
+        }
+        .timer {
+            font-size: 14px;
+            margin-top: 5px;
+            color: #fff;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -84,7 +98,9 @@
         <div class="progress-container" onclick="setProgress(event)">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
-        
+
+        <p class="timer"><span id="current-time">0:00</span> / <span id="total-duration">0:00</span></p>
+
         <div class="controls">
             <button class="play-btn" onclick="togglePlayPause()">▶️ Play</button>
         </div>
@@ -97,7 +113,7 @@
         </div>
         
         <p>Current Volume: <span id="volume-display">100</span>%</p>
-        <div class="progress-container" onclick="setVolume(event)">
+        <div class="volume-container" onclick="setVolume(event)">
             <div class="volume-bar" id="volume-bar"></div>
         </div>
     </div>
@@ -108,7 +124,10 @@
         const progressBar = document.getElementById("progress-bar");
         const volumeBar = document.getElementById("volume-bar");
         const progressContainer = document.querySelector(".progress-container");
+        const volumeContainer = document.querySelector(".volume-container");
         const playBtn = document.querySelector(".play-btn");
+        const currentTimeDisplay = document.getElementById("current-time");
+        const totalDurationDisplay = document.getElementById("total-duration");
 
         function togglePlayPause() {
             if (audio.paused) {
@@ -131,6 +150,7 @@
         function updateProgressBar() {
             const progressPercent = (audio.currentTime / audio.duration) * 100;
             progressBar.style.width = `${progressPercent}%`;
+            currentTimeDisplay.textContent = formatTime(audio.currentTime);
         }
 
         function updateVolumeBar() {
@@ -146,13 +166,25 @@
         }
 
         function setVolume(event) {
-            const width = progressContainer.clientWidth;
+            const width = volumeContainer.clientWidth;
             const clickX = event.offsetX;
             let newVolume = clickX / width;
             newVolume = Math.max(0, Math.min(1, newVolume));
             audio.volume = newVolume;
             volumeDisplay.textContent = Math.round(newVolume * 100);
             updateVolumeBar();
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+        }
+
+        function updateTotalDuration() {
+            if (!isNaN(audio.duration)) {
+                totalDurationDisplay.textContent = formatTime(audio.duration);
+            }
         }
 
         // Prevent double-tap zoom on iPhones
@@ -162,6 +194,7 @@
 
         audio.addEventListener("timeupdate", updateProgressBar);
         audio.addEventListener("volumechange", updateVolumeBar);
+        audio.addEventListener("loadedmetadata", updateTotalDuration);
     </script>
 </body>
 </html>
