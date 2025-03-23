@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Audio Player</title>
     <style>
         body {
@@ -32,23 +32,13 @@
             cursor: pointer;
             font-size: 16px;
             transition: transform 0.3s, background 0.3s;
-            touch-action: manipulation;
         }
         .small-btn { background: #ffcc00; color: black; }
         .large-btn { background: #ff4444; color: white; }
-        .play-btn {
-            background: #00cc66;
-            color: white;
-            font-size: 24px;
-            padding: 20px 30px;
-        }
+        .play-btn { background: #00cc66; color: white; font-size: 20px; padding: 16px 24px; }
         button:hover {
             transform: scale(1.1);
             background: rgba(255, 255, 255, 0.3);
-        }
-        audio {
-            width: 100%;
-            margin-top: 10px;
         }
         .progress-container {
             width: 100%;
@@ -78,14 +68,9 @@
         .volume-bar {
             height: 100%;
             width: 100%;
-            background: #00cc66;
+            background: #ff4444;
             border-radius: 5px;
             transition: width 0.2s;
-        }
-        .timer {
-            font-size: 14px;
-            margin-top: 5px;
-            color: #fff;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -93,25 +78,25 @@
 <body>
     <div class="player-container">
         <h2>🎵 Modern Audio Player</h2>
-        <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" controls></audio>
+        <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
         
         <div class="progress-container" onclick="setProgress(event)">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
 
-        <p class="timer"><span id="current-time">0:00</span> / <span id="total-duration">0:00</span></p>
+        <p id="timer">00:00 / 00:00</p>
 
         <div class="controls">
             <button class="play-btn" onclick="togglePlayPause()">▶️ Play</button>
         </div>
-        
+
         <div class="controls">
             <button class="small-btn" onclick="changeVolume(-0.01)">🔉 - 0.01</button>
             <button class="small-btn" onclick="changeVolume(0.01)">🔊 + 0.01</button>
             <button class="large-btn" onclick="changeVolume(-0.1)">🔉 - 0.1</button>
             <button class="large-btn" onclick="changeVolume(0.1)">🔊 + 0.1</button>
         </div>
-        
+
         <p>Current Volume: <span id="volume-display">100</span>%</p>
         <div class="volume-container" onclick="setVolume(event)">
             <div class="volume-bar" id="volume-bar"></div>
@@ -123,15 +108,19 @@
         const volumeDisplay = document.getElementById("volume-display");
         const progressBar = document.getElementById("progress-bar");
         const volumeBar = document.getElementById("volume-bar");
-        const progressContainer = document.querySelector(".progress-container");
-        const volumeContainer = document.querySelector(".volume-container");
         const playBtn = document.querySelector(".play-btn");
-        const currentTimeDisplay = document.getElementById("current-time");
-        const totalDurationDisplay = document.getElementById("total-duration");
+        const timerDisplay = document.getElementById("timer");
+
+        // Web Audio API for iOS volume fix
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const track = audioContext.createMediaElementSource(audio);
+        const gainNode = audioContext.createGain();
+        track.connect(gainNode).connect(audioContext.destination);
 
         function togglePlayPause() {
             if (audio.paused) {
                 audio.play();
+                audioContext.resume(); // Required for iOS
                 playBtn.textContent = "⏸️ Pause";
             } else {
                 audio.pause();
@@ -140,61 +129,53 @@
         }
 
         function changeVolume(amount) {
-            let newVolume = audio.volume + amount;
+            let newVolume = gainNode.gain.value + amount;
             newVolume = Math.max(0, Math.min(1, newVolume)); // Keep volume between 0 and 1
-            audio.volume = newVolume;
-            volumeDisplay.textContent = Math.round(newVolume * 100); // Display volume as percentage
+            gainNode.gain.value = newVolume;
+            volumeDisplay.textContent = Math.round(newVolume * 100);
             updateVolumeBar();
+        }
+
+        function setVolume(event) {
+            const width = event.target.clientWidth;
+            const clickX = event.offsetX;
+            let newVolume = clickX / width;
+            newVolume = Math.max(0, Math.min(1, newVolume));
+            gainNode.gain.value = newVolume;
+            volumeDisplay.textContent = Math.round(newVolume * 100);
+            updateVolumeBar();
+        }
+
+        function updateVolumeBar() {
+            volumeBar.style.width = `${gainNode.gain.value * 100}%`;
         }
 
         function updateProgressBar() {
             const progressPercent = (audio.currentTime / audio.duration) * 100;
             progressBar.style.width = `${progressPercent}%`;
-            currentTimeDisplay.textContent = formatTime(audio.currentTime);
-        }
-
-        function updateVolumeBar() {
-            const volumePercent = audio.volume * 100;
-            volumeBar.style.width = `${volumePercent}%`;
+            updateTimer();
         }
 
         function setProgress(event) {
-            const width = progressContainer.clientWidth;
+            const width = event.target.clientWidth;
             const clickX = event.offsetX;
             const duration = audio.duration;
             audio.currentTime = (clickX / width) * duration;
         }
 
-        function setVolume(event) {
-            const width = volumeContainer.clientWidth;
-            const clickX = event.offsetX;
-            let newVolume = clickX / width;
-            newVolume = Math.max(0, Math.min(1, newVolume));
-            audio.volume = newVolume;
-            volumeDisplay.textContent = Math.round(newVolume * 100);
-            updateVolumeBar();
-        }
+        function updateTimer() {
+            const currentMinutes = Math.floor(audio.currentTime / 60);
+            const currentSeconds = Math.floor(audio.currentTime % 60);
+            const durationMinutes = Math.floor(audio.duration / 60);
+            const durationSeconds = Math.floor(audio.duration % 60);
 
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+            timerDisplay.textContent = 
+                `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / 
+                 ${durationMinutes}:${durationSeconds.toString().padStart(2, '0')}`;
         }
-
-        function updateTotalDuration() {
-            if (!isNaN(audio.duration)) {
-                totalDurationDisplay.textContent = formatTime(audio.duration);
-            }
-        }
-
-        // Prevent double-tap zoom on iPhones
-        document.addEventListener('dblclick', function (event) {
-            event.preventDefault();
-        }, { passive: false });
 
         audio.addEventListener("timeupdate", updateProgressBar);
-        audio.addEventListener("volumechange", updateVolumeBar);
-        audio.addEventListener("loadedmetadata", updateTotalDuration);
+        audio.addEventListener("loadedmetadata", updateTimer);
     </script>
 </body>
 </html>
