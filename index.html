@@ -12,6 +12,7 @@
       color: white;
       padding: 20px;
       touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     .player-container {
       background: rgba(255, 255, 255, 0.15);
@@ -20,14 +21,9 @@
       box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
       display: inline-block;
       backdrop-filter: blur(10px);
-      max-width: 400px;
-      width: 100%;
     }
     .controls {
       margin-top: 15px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
     }
     button {
       padding: 12px 18px;
@@ -54,53 +50,44 @@
       position: relative;
       cursor: pointer;
     }
-    .progress-bar, .volume-bar {
+    .progress-bar {
       height: 100%;
+      background: #ffcc00;
       border-radius: 5px;
       transition: width 0.2s;
     }
-    .progress-bar {
-      background: #ffcc00;
-    }
     .volume-bar {
+      height: 100%;
+      border-radius: 5px;
       transition: width 0.2s, background 0.2s;
     }
-    .dot {
-      position: absolute;
-      top: 50%;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: white;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-    #progress-dot { background: #fff; }
-    #volume-dot { background: #fff; }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="player-container">
     <h2>🎵 Modern Audio Player</h2>
-    <audio id="audio" crossorigin="anonymous" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto"></audio>
+
     <div class="progress-container" onclick="setProgress(event)">
       <div class="progress-bar" id="progress-bar"></div>
-      <div class="dot" id="progress-dot"></div>
     </div>
+
     <p id="timer">00:00 / 00:00</p>
+
     <div class="controls">
       <button class="play-btn" onclick="togglePlayPause()">▶️ Play</button>
     </div>
+
     <div class="controls">
       <button class="small-btn" onclick="changeVolume(-0.01)">🔉 - 0.01</button>
       <button class="small-btn" onclick="changeVolume(0.01)">🔊 + 0.01</button>
       <button class="large-btn" onclick="changeVolume(-0.1)">🔉 - 0.1</button>
       <button class="large-btn" onclick="changeVolume(0.1)">🔊 + 0.1</button>
     </div>
+
     <div class="volume-container" onclick="setVolume(event)">
       <div class="volume-bar" id="volume-bar"></div>
-      <div class="dot" id="volume-dot"></div>
     </div>
     <p>Current Volume: <span id="volume-display">100</span>%</p>
   </div>
@@ -114,20 +101,10 @@
     const volumeContainer = document.querySelector(".volume-container");
     const playBtn = document.querySelector(".play-btn");
     const timer = document.getElementById("timer");
-    const progressDot = document.getElementById("progress-dot");
-    const volumeDot = document.getElementById("volume-dot");
-
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const track = audioContext.createMediaElementSource(audio);
-    const gainNode = audioContext.createGain();
-    track.connect(gainNode).connect(audioContext.destination);
 
     let customVolume = 1.0;
 
     function togglePlayPause() {
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
       if (audio.paused) {
         audio.play();
         playBtn.textContent = "⏸️ Pause";
@@ -139,22 +116,19 @@
 
     function changeVolume(amount) {
       customVolume = Math.max(0, Math.min(1, customVolume + amount));
-      updateVolume();
+      audio.volume = customVolume;
+      volumeDisplay.textContent = Math.round(customVolume * 100);
+      volumeBar.style.width = `${customVolume * 100}%`;
+      updateVolumeColor(customVolume);
     }
 
     function setVolume(event) {
       const width = volumeContainer.clientWidth;
       const clickX = event.offsetX;
       customVolume = Math.max(0, Math.min(1, clickX / width));
-      updateVolume();
-    }
-
-    function updateVolume() {
-      gainNode.gain.value = customVolume;
+      audio.volume = customVolume;
       volumeDisplay.textContent = Math.round(customVolume * 100);
-      const percent = customVolume * 100;
-      volumeBar.style.width = `${percent}%`;
-      volumeDot.style.left = `${percent}%`;
+      volumeBar.style.width = `${customVolume * 100}%`;
       updateVolumeColor(customVolume);
     }
 
@@ -165,9 +139,8 @@
     }
 
     function updateProgressBar() {
-      const percent = (audio.currentTime / audio.duration) * 100;
-      progressBar.style.width = `${percent}%`;
-      progressDot.style.left = `${percent}%`;
+      const progressPercent = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.width = `${progressPercent}%`;
       updateTimer();
     }
 
@@ -192,9 +165,10 @@
     }
 
     audio.addEventListener("timeupdate", updateProgressBar);
-
     window.onload = () => {
-      updateVolume();
+      audio.volume = customVolume;
+      volumeBar.style.width = `${customVolume * 100}%`;
+      updateVolumeColor(customVolume);
     };
   </script>
 </body>
