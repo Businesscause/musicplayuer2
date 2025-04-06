@@ -60,6 +60,7 @@
             border-radius: 5px;
             transition: width 0.2s, background 0.2s;
         }
+        #native-controls { display: none; margin-top: 20px; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
@@ -71,10 +72,9 @@
             <div class="progress-bar" id="progress-bar"></div>
         </div>
         <p id="timer">00:00 / 00:00</p>
-        <div class="controls">
+        <div class="controls" id="custom-controls">
             <button class="play-btn" onclick="togglePlayPause()">▶️ Play</button>
-        </div>
-        <div class="controls">
+            <br>
             <button class="small-btn" onclick="changeVolume(-0.01)">🔉 - 0.01</button>
             <button class="small-btn" onclick="changeVolume(0.01)">🔊 + 0.01</button>
             <button class="large-btn" onclick="changeVolume(-0.1)">🔉 - 0.1</button>
@@ -83,10 +83,14 @@
         <div class="volume-container" onclick="setVolume(event)">
             <div class="volume-bar" id="volume-bar"></div>
         </div>
-        <p>Current Volume: <span id="volume-display">100</span>%</p>
+        <p id="volume-text">Current Volume: <span id="volume-display">100</span>%</p>
+        <div id="native-controls">
+            <audio controls src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+        </div>
     </div>
 
     <script>
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const audio = document.getElementById("audio");
         const volumeDisplay = document.getElementById("volume-display");
         const progressBar = document.getElementById("progress-bar");
@@ -95,6 +99,13 @@
         const volumeContainer = document.querySelector(".volume-container");
         const playBtn = document.querySelector(".play-btn");
         const timer = document.getElementById("timer");
+
+        if (isIOS) {
+            document.getElementById("custom-controls").style.display = "none";
+            document.querySelector(".volume-container").style.display = "none";
+            document.getElementById("volume-text").style.display = "none";
+            document.getElementById("native-controls").style.display = "block";
+        }
 
         function togglePlayPause() {
             if (audio.paused) {
@@ -108,7 +119,7 @@
 
         function changeVolume(amount) {
             let newVolume = audio.volume + amount;
-            newVolume = Math.max(0, Math.min(1, newVolume)); 
+            newVolume = Math.max(0, Math.min(1, newVolume));
             audio.volume = newVolume;
             volumeDisplay.textContent = Math.round(newVolume * 100);
             volumeBar.style.width = `${newVolume * 100}%`;
