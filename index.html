@@ -1,178 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Audio Player</title>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            text-align: center;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px;
-            touch-action: manipulation;
-        }
-        .player-container {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
-            display: inline-block;
-            backdrop-filter: blur(10px);
-        }
-        .controls {
-            margin-top: 15px;
-        }
-        button {
-            padding: 12px 18px;
-            margin: 5px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: transform 0.3s, background 0.3s;
-        }
-        .small-btn { background: #ffcc00; color: black; }
-        .large-btn { background: #ff4444; color: white; }
-        .play-btn { background: #00cc66; color: white; font-size: 20px; padding: 16px 24px; }
-        button:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 0.3);
-        }
-        .progress-container, .volume-container {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 5px;
-            height: 8px;
-            margin: 10px 0;
-            position: relative;
-            cursor: pointer;
-        }
-        .progress-bar {
-            height: 100%;
-            background: #ffcc00;
-            border-radius: 5px;
-            transition: width 0.2s;
-        }
-        .volume-bar {
-            height: 100%;
-            border-radius: 5px;
-            transition: width 0.2s, background 0.2s;
-        }
-        #native-controls { display: none; margin-top: 20px; }
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Audio Player</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 20px;
+      touch-action: manipulation;
+    }
+    .player-container {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+      display: inline-block;
+      backdrop-filter: blur(10px);
+      max-width: 400px;
+      width: 100%;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button {
+      padding: 12px 18px;
+      margin: 5px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: transform 0.3s, background 0.3s;
+    }
+    .small-btn { background: #ffcc00; color: black; }
+    .large-btn { background: #ff4444; color: white; }
+    .play-btn { background: #00cc66; color: white; font-size: 20px; padding: 16px 24px; }
+    button:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .progress-container, .volume-container {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 5px;
+      height: 8px;
+      margin: 10px 0;
+      position: relative;
+      cursor: pointer;
+    }
+    .progress-bar, .volume-bar {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.2s;
+    }
+    .progress-bar {
+      background: #ffcc00;
+    }
+    .volume-bar {
+      transition: width 0.2s, background 0.2s;
+    }
+    .dot {
+      position: absolute;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: white;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    #progress-dot { background: #fff; }
+    #volume-dot { background: #fff; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
 </head>
 <body>
-    <div class="player-container">
-        <h2>🎵 Modern Audio Player</h2>
-        <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
-        <div class="progress-container" onclick="setProgress(event)">
-            <div class="progress-bar" id="progress-bar"></div>
-        </div>
-        <p id="timer">00:00 / 00:00</p>
-        <div class="controls" id="custom-controls">
-            <button class="play-btn" onclick="togglePlayPause()">▶️ Play</button>
-            <br>
-            <button class="small-btn" onclick="changeVolume(-0.01)">🔉 - 0.01</button>
-            <button class="small-btn" onclick="changeVolume(0.01)">🔊 + 0.01</button>
-            <button class="large-btn" onclick="changeVolume(-0.1)">🔉 - 0.1</button>
-            <button class="large-btn" onclick="changeVolume(0.1)">🔊 + 0.1</button>
-        </div>
-        <div class="volume-container" onclick="setVolume(event)">
-            <div class="volume-bar" id="volume-bar"></div>
-        </div>
-        <p id="volume-text">Current Volume: <span id="volume-display">100</span>%</p>
-        <div id="native-controls">
-            <audio controls src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
-        </div>
+  <div class="player-container">
+    <h2>🎵 Modern Audio Player</h2>
+    <audio id="audio" crossorigin="anonymous" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <div class="progress-container" onclick="setProgress(event)">
+      <div class="progress-bar" id="progress-bar"></div>
+      <div class="dot" id="progress-dot"></div>
     </div>
+    <p id="timer">00:00 / 00:00</p>
+    <div class="controls">
+      <button class="play-btn" onclick="togglePlayPause()">▶️ Play</button>
+    </div>
+    <div class="controls">
+      <button class="small-btn" onclick="changeVolume(-0.01)">🔉 - 0.01</button>
+      <button class="small-btn" onclick="changeVolume(0.01)">🔊 + 0.01</button>
+      <button class="large-btn" onclick="changeVolume(-0.1)">🔉 - 0.1</button>
+      <button class="large-btn" onclick="changeVolume(0.1)">🔊 + 0.1</button>
+    </div>
+    <div class="volume-container" onclick="setVolume(event)">
+      <div class="volume-bar" id="volume-bar"></div>
+      <div class="dot" id="volume-dot"></div>
+    </div>
+    <p>Current Volume: <span id="volume-display">100</span>%</p>
+  </div>
 
-    <script>
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const audio = document.getElementById("audio");
-        const volumeDisplay = document.getElementById("volume-display");
-        const progressBar = document.getElementById("progress-bar");
-        const volumeBar = document.getElementById("volume-bar");
-        const progressContainer = document.querySelector(".progress-container");
-        const volumeContainer = document.querySelector(".volume-container");
-        const playBtn = document.querySelector(".play-btn");
-        const timer = document.getElementById("timer");
+  <script>
+    const audio = document.getElementById("audio");
+    const volumeDisplay = document.getElementById("volume-display");
+    const progressBar = document.getElementById("progress-bar");
+    const volumeBar = document.getElementById("volume-bar");
+    const progressContainer = document.querySelector(".progress-container");
+    const volumeContainer = document.querySelector(".volume-container");
+    const playBtn = document.querySelector(".play-btn");
+    const timer = document.getElementById("timer");
+    const progressDot = document.getElementById("progress-dot");
+    const volumeDot = document.getElementById("volume-dot");
 
-        if (isIOS) {
-            document.getElementById("custom-controls").style.display = "none";
-            document.querySelector(".volume-container").style.display = "none";
-            document.getElementById("volume-text").style.display = "none";
-            document.getElementById("native-controls").style.display = "block";
-        }
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const track = audioContext.createMediaElementSource(audio);
+    const gainNode = audioContext.createGain();
+    track.connect(gainNode).connect(audioContext.destination);
 
-        function togglePlayPause() {
-            if (audio.paused) {
-                audio.play();
-                playBtn.textContent = "⏸️ Pause";
-            } else {
-                audio.pause();
-                playBtn.textContent = "▶️ Play";
-            }
-        }
+    let customVolume = 1.0;
 
-        function changeVolume(amount) {
-            let newVolume = audio.volume + amount;
-            newVolume = Math.max(0, Math.min(1, newVolume));
-            audio.volume = newVolume;
-            volumeDisplay.textContent = Math.round(newVolume * 100);
-            volumeBar.style.width = `${newVolume * 100}%`;
-            updateVolumeColor(newVolume);
-        }
+    function togglePlayPause() {
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      if (audio.paused) {
+        audio.play();
+        playBtn.textContent = "⏸️ Pause";
+      } else {
+        audio.pause();
+        playBtn.textContent = "▶️ Play";
+      }
+    }
 
-        function updateProgressBar() {
-            const progressPercent = (audio.currentTime / audio.duration) * 100;
-            progressBar.style.width = `${progressPercent}%`;
-            updateTimer();
-        }
+    function changeVolume(amount) {
+      customVolume = Math.max(0, Math.min(1, customVolume + amount));
+      updateVolume();
+    }
 
-        function setProgress(event) {
-            const width = progressContainer.clientWidth;
-            const clickX = event.offsetX;
-            const duration = audio.duration;
-            audio.currentTime = (clickX / width) * duration;
-        }
+    function setVolume(event) {
+      const width = volumeContainer.clientWidth;
+      const clickX = event.offsetX;
+      customVolume = Math.max(0, Math.min(1, clickX / width));
+      updateVolume();
+    }
 
-        function setVolume(event) {
-            const width = volumeContainer.clientWidth;
-            const clickX = event.offsetX;
-            const newVolume = clickX / width;
-            audio.volume = newVolume;
-            volumeDisplay.textContent = Math.round(newVolume * 100);
-            volumeBar.style.width = `${newVolume * 100}%`;
-            updateVolumeColor(newVolume);
-        }
+    function updateVolume() {
+      gainNode.gain.value = customVolume;
+      volumeDisplay.textContent = Math.round(customVolume * 100);
+      const percent = customVolume * 100;
+      volumeBar.style.width = `${percent}%`;
+      volumeDot.style.left = `${percent}%`;
+      updateVolumeColor(customVolume);
+    }
 
-        function updateTimer() {
-            let currentTime = formatTime(audio.currentTime);
-            let duration = formatTime(audio.duration);
-            timer.textContent = `${currentTime} / ${duration}`;
-        }
+    function updateVolumeColor(volume) {
+      const red = Math.round(255 * (1 - volume));
+      const blue = Math.round(255 * volume);
+      volumeBar.style.background = `rgb(${red}, 0, ${blue})`;
+    }
 
-        function formatTime(time) {
-            if (isNaN(time)) return "00:00";
-            const minutes = Math.floor(time / 60);
-            const seconds = Math.floor(time % 60);
-            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
+    function updateProgressBar() {
+      const percent = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.width = `${percent}%`;
+      progressDot.style.left = `${percent}%`;
+      updateTimer();
+    }
 
-        function updateVolumeColor(volume) {
-            const red = Math.round(255 * (1 - volume));
-            const blue = Math.round(255 * volume);
-            volumeBar.style.background = `rgb(${red}, 0, ${blue})`;
-        }
+    function setProgress(event) {
+      const width = progressContainer.clientWidth;
+      const clickX = event.offsetX;
+      const duration = audio.duration;
+      audio.currentTime = (clickX / width) * duration;
+    }
 
-        audio.addEventListener("timeupdate", updateProgressBar);
-        window.onload = () => {
-            volumeBar.style.width = `${audio.volume * 100}%`;
-            updateVolumeColor(audio.volume);
-        };
-    </script>
+    function updateTimer() {
+      let currentTime = formatTime(audio.currentTime);
+      let duration = formatTime(audio.duration);
+      timer.textContent = `${currentTime} / ${duration}`;
+    }
+
+    function formatTime(time) {
+      if (isNaN(time)) return "00:00";
+      const minutes = Math.floor(time / 60);
+      const seconds = Math.floor(time % 60);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    audio.addEventListener("timeupdate", updateProgressBar);
+
+    window.onload = () => {
+      updateVolume();
+    };
+  </script>
 </body>
 </html>
